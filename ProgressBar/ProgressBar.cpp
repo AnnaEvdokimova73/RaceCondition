@@ -1,47 +1,40 @@
 ﻿#include <iostream>
+#include <vector>
 #include <thread>
+#include <mutex>
 
-void count()
+const int THREAD_COUNT = 5;
+const int TOTAL_PROGRESS = 10;
+
+std::mutex mtx;
+
+void count(int id)
 {
     system("color 0A");
     std::cout << "\n";
+    std::cout << id << "\t";
     std::cout << std::this_thread::get_id << "\t";
-    // Print initial loading bar 
-    char a = 177, b = 219;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::lock_guard<std::mutex> lock(mtx);
 
-
-    // Print loading bar progress 
-    for (int i = 0; i < 26; i++) {
-        std::cout << "[";
-
-        // Sleep for 1 second 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-}
-
-void count1()
-{
-    system("color 0A");
-    std::cout << "\n";
-    std::cout << std::this_thread::get_id << "\t";
-    // Print initial loading bar 
-    char a = 177, b = 219;
-
-
-    for (int i = 0; i < 26; i++) {
-        printf("%c", b);
-        // Sleep for 1 second 
+    for (int i = 0; i < TOTAL_PROGRESS; ++i)
+    {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cout << "|";
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 }
 
 int main()
 {
-    std::cout << "Hello World!\n";
-    std::thread t1(count1);
-    std::thread t2(count);
+    std::thread threads[THREAD_COUNT];
+    
+    for (int i = 0; i < THREAD_COUNT; ++i)
+    {
+        threads[i] = std::thread(count, i);
+    }
 
-    t1.join();
-    t2.join();
+    for (int i = 0; i < THREAD_COUNT; ++i)
+    {
+        threads[i].join();
+    }
 }
