@@ -1,23 +1,62 @@
-﻿#include <iostream>
-#include <vector>
-#include <thread>
-#include <mutex>
+﻿#include "header.h"
 
-#define ESC "\033"
-#define CSI "["
-#define PREVIOUS_LINE "F"
+void setError(threadInfo& tInfo)
+{
+    // имитация ошибки
+    if (tInfo.progress == 20)
+    {
+        tInfo.error = NORMAL;
+    }
+    /*else
+    {
+        tInfo.error = NO;
+    }*/
 
-const int THREAD_COUNT = 3;
-const int TOTAL_PROGRESS = 40;
+    // имитация ошибок
+    /*if (tInfo.progress % 10 == 0 || tInfo.progress % 95 == 0)
+    {
+        tInfo.error = NORMAL;
+    }
+    else if (tInfo.progress % 13 == 0 || tInfo.progress % 55 == 0)
+    {
+        tInfo.error = MEAN;
+    }
+    else if (tInfo.progress % 24 == 0 || tInfo.progress % 37 == 0)
+    {
+        tInfo.error = CRITICAL;
+    }
+    else
+    {
+        tInfo.error = NO;
+    }*/
+}
 
-std::chrono::steady_clock::time_point timers[THREAD_COUNT][2];
-
-struct threadInfo {
-    int countToVal;
-    int progress;
-    std::thread thread;
-    bool barDone;
-};
+bool setNewColor(int i, int progress, ErrorType error)
+{
+    if (i == 10)
+    {
+        switch (error)
+        {
+        case NO:
+            SetConsoleTextAttribute(h, 15);
+            return false;
+            break;
+        case NORMAL:
+            SetConsoleTextAttribute(h, 2);
+            return true;
+            break;
+        case MEAN:
+            SetConsoleTextAttribute(h, 14);
+            return true;
+            break;
+        case CRITICAL:
+            SetConsoleTextAttribute(h, 4);
+            return true;
+            break;
+        }
+    }
+    return false;
+}
 
 void setProgress(threadInfo& tInfo, int num)
 {
@@ -26,6 +65,8 @@ void setProgress(threadInfo& tInfo, int num)
     {
         ran = rand() % 3;
         std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 100));
+
+        setError(tInfo);
     }
 }
 
@@ -34,14 +75,22 @@ void updateBar(threadInfo& tInfo, int num)
     if (!tInfo.barDone)
     {
         std::cout << num << " " << tInfo.thread.get_id() << " ";
+
         int numChars = (tInfo.progress * 100 / tInfo.countToVal) *
             TOTAL_PROGRESS / 100;
 
         std::cout << "[";
         for (int i = 0; i < numChars; ++i)
         {
+            if (setNewColor(i, tInfo.progress, tInfo.error))
+            {
+                // tInfo.error = NO;
+            }
             std::cout << "-";
+
+            SetConsoleTextAttribute(h, 15);
         }
+        //tInfo.error = NO;
 
         for (int i = 0; i < TOTAL_PROGRESS - numChars; ++i)
         {
@@ -75,6 +124,7 @@ int main()
         threads[i].countToVal = rand() % 100;
         threads[i].progress = 0;
         threads[i].barDone = false;
+        threads[i].error = NO;
         threads[i].thread = std::thread(setProgress, std::ref(threads[i]), i);
     }
 
