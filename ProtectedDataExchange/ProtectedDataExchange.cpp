@@ -4,8 +4,9 @@ namespace exchange_lock
 {
     void swap(Data& data1, Data& data2)
     {
-        data1.dataMutex.lock();
-        data2.dataMutex.lock();
+        std::lock(data1.dataMutex, data2.dataMutex);
+        std::lock_guard lg1(data1.dataMutex);
+        std::lock_guard lg2(data2.dataMutex);
 
         Data temp;
         temp.a = data2.a;
@@ -16,9 +17,6 @@ namespace exchange_lock
 
         data1.a = temp.a;
         data1.b = temp.b;
-
-        data1.dataMutex.unlock();
-        data2.dataMutex.unlock();
     }
 }
 
@@ -46,6 +44,7 @@ namespace exchange_unique_lock
     {
         std::unique_lock uniqLock1(data1.dataMutex);
         std::unique_lock uniqLock2(data2.dataMutex);
+        std::lock(uniqLock1, uniqLock2);
 
         Data temp;
         temp.a = data2.a;
