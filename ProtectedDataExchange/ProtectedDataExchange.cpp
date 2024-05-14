@@ -5,8 +5,8 @@ namespace exchange_lock
     void swap(Data& data1, Data& data2)
     {
         std::lock(data1.dataMutex, data2.dataMutex);
-        std::lock_guard lg1(data1.dataMutex);
-        std::lock_guard lg2(data2.dataMutex);
+        std::lock_guard lg1(data1.dataMutex, std::adopt_lock);
+        std::lock_guard lg2(data2.dataMutex, std::adopt_lock);
 
         Data temp;
         temp.a = data2.a;
@@ -42,8 +42,8 @@ namespace exchange_unique_lock
 {
     void swap(Data& data1, Data& data2)
     {
-        std::unique_lock uniqLock1(data1.dataMutex);
-        std::unique_lock uniqLock2(data2.dataMutex);
+        std::unique_lock uniqLock1(data1.dataMutex, std::defer_lock);
+        std::unique_lock uniqLock2(data2.dataMutex, std::defer_lock);
         std::lock(uniqLock1, uniqLock2);
 
         Data temp;
@@ -87,7 +87,7 @@ void exchangeData(int namespaceType, const std::string& title)
     }
 
     std::thread firstTread(swap, std::ref(data), std::ref(data2));
-    std::thread secTread(swap, std::ref(data2), std::ref(data));
+    std::thread secTread(swap, std::ref(data2), std::ref(data3));
 
     firstTread.join();
     secTread.join();
